@@ -1,4 +1,8 @@
-package main
+// Copyright 2022 <mzh.scnu@qq.com>. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package tools
 
 import (
 	"context"
@@ -7,13 +11,23 @@ import (
 	"github.com/gofrs/uuid"
 )
 
+const (
+	// defaultExp  default timeout for lock
+	defaultExp = 10 * time.Second
+
+	// sleepDur default sleep time for spin lock
+	sleepDur = 10 * time.Millisecond
+)
+
+// RedisLock .
 type RedisLock struct {
 	Client     RedisClient
-	Key        string
-	uuid       string
+	Key        string // resources that need to be locked
+	uuid       string // lock owner uuid
 	cancelFunc context.CancelFunc
 }
 
+// NewRedisLock new a redis distribute lock
 func NewRedisLock(client RedisClient, key string) (*RedisLock, error) {
 	id, err := uuid.NewV4()
 	if err != nil {
@@ -26,6 +40,7 @@ func NewRedisLock(client RedisClient, key string) (*RedisLock, error) {
 	}, nil
 }
 
+// TryLock attempt to lock, return true if the lock is successful, otherwise false
 func (rl *RedisLock) TryLock(ctx context.Context) (bool, error) {
 	succ, err := rl.Client.SetNX(ctx, rl.Key, rl.uuid, defaultExp).Result()
 	if err != nil {
@@ -37,6 +52,7 @@ func (rl *RedisLock) TryLock(ctx context.Context) (bool, error) {
 	return succ, nil
 }
 
+// SpinLock Loop `retryTimes` times to call TryLock
 func (rl *RedisLock) SpinLock(ctx context.Context, retryTimes int) (bool, error) {
 	for i := 0; i < retryTimes; i++ {
 		resp, err := rl.TryLock(ctx)
@@ -51,6 +67,7 @@ func (rl *RedisLock) SpinLock(ctx context.Context, retryTimes int) (bool, error)
 	return false, nil
 }
 
+// Unlock attempt to unlock, return true if the lock is successful, otherwise false
 func (rl *RedisLock) Unlock(ctx context.Context) (bool, error) {
 	resp, err := NewTools(rl.Client).Cad(ctx, rl.Key, rl.uuid)
 	if err != nil {

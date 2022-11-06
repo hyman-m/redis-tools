@@ -1,7 +1,12 @@
-package main
+// Copyright 2022 <mzh.scnu@qq.com>. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package tools
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -24,7 +29,7 @@ const (
 
 	compareAndSwapEXScript = `
 	if redis.call("GET", KEYS[1]) == ARGV[1] then
-    	return redis.call("SET", KEYS[1], ARGV[2], "EX" ,ARGV[3])
+    	return redis.call("SET", KEYS[1], ARGV[2], %s ,ARGV[3])
 	else
     	return 0
 	end
@@ -38,25 +43,20 @@ const (
 	end
 	`
 
-	compareAndSwapPXScript = `
-	if redis.call("GET", KEYS[1]) == ARGV[1] then
-    	return redis.call("SET", KEYS[1], ARGV[2], "PX" ,ARGV[3])
-	else
-    	return 0
-	end
-	`
-
 	success = "OK"
 )
 
+// RedisTools .
 type RedisTools struct {
 	Client RedisClient
 }
 
+// NewTools create a new redis tools
 func NewTools(client RedisClient) *RedisTools {
 	return &RedisTools{Client: client}
 }
 
+// Cas compare and swap
 func (r *RedisTools) Cas(ctx context.Context, key string, oldValue interface{},
 	newValue interface{}) (bool, error) {
 
@@ -70,6 +70,9 @@ func (r *RedisTools) Cas(ctx context.Context, key string, oldValue interface{},
 	return false, nil
 }
 
+// CasEx compare and swap with timeout,
+// If the timeout is 0, the timeout is not set,
+// If the timeout is -1, keep timeout (redis >= 6.0).
 func (r *RedisTools) CasEx(ctx context.Context, key string, oldValue interface{},
 	newValue interface{}, expire time.Duration) (bool, error) {
 	if expire == 0 {
@@ -79,15 +82,16 @@ func (r *RedisTools) CasEx(ctx context.Context, key string, oldValue interface{}
 	var err error
 	var res interface{}
 	if usePrecise(expire) {
-		res, err = r.Client.Eval(ctx, compareAndSwapPXScript, []string{key},
-			oldValue, newValue, formatMs(expire)).Result()
+		res, err = r.Client.Eval(ctx, fmt.Sprintf(compareAndSwapEXScript, "PX"),
+			[]string{key}, oldValue, newValue, formatMs(expire)).Result()
 	} else if expire > 0 {
-		res, err = r.Client.Eval(ctx, compareAndSwapEXScript, []string{key},
-			oldValue, newValue, formatSec(expire)).Result()
+		res, err = r.Client.Eval(ctx, fmt.Sprintf(compareAndSwapEXScript, "EX"),
+			[]string{key}, oldValue, newValue, formatSec(expire)).Result()
 	} else {
 		res, err = r.Client.Eval(ctx, compareAndSwapKeepTTLScript, []string{key},
 			oldValue, newValue).Result()
 	}
+
 	if err != nil {
 		return false, err
 	}
@@ -97,6 +101,7 @@ func (r *RedisTools) CasEx(ctx context.Context, key string, oldValue interface{}
 	return false, nil
 }
 
+// Cad compare and delete
 func (r *RedisTools) Cad(ctx context.Context, key string, value interface{}) (bool, error) {
 	res, err := r.Client.Eval(ctx, compareAndDeleteScript, []string{key}, value).Result()
 	if err != nil {

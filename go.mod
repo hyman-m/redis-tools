@@ -1,4 +1,4 @@
-module demo
+module github.com/zehuamama/redis-tools
 
 go 1.19
 
