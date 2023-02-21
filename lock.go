@@ -43,7 +43,7 @@ func NewRedisLock(client RedisClient, key string) (*RedisLock, error) {
 // TryLock attempt to lock, return true if the lock is successful, otherwise false
 func (rl *RedisLock) TryLock(ctx context.Context) (bool, error) {
 	succ, err := rl.Client.SetNX(ctx, rl.Key, rl.uuid, defaultExp).Result()
-	if err != nil {
+	if err != nil || !succ {
 		return false, err
 	}
 	c, cancel := context.WithCancel(ctx)
