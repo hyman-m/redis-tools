@@ -69,15 +69,9 @@ func (rl *RedisLock) SpinLock(ctx context.Context, retryTimes int) (bool, error)
 
 // Unlock attempt to unlock, return true if the lock is successful, otherwise false
 func (rl *RedisLock) Unlock(ctx context.Context) (bool, error) {
-	resp, err := NewTools(rl.Client).Cad(ctx, rl.Key, rl.uuid)
-	if err != nil {
-		return false, err
-	}
+	defer rl.cancelFunc()
 
-	if resp {
-		rl.cancelFunc()
-	}
-	return resp, nil
+	return NewTools(rl.Client).Cad(ctx, rl.Key, rl.uuid)
 }
 
 func (rl *RedisLock) refresh(ctx context.Context) {
