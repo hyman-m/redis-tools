@@ -1,6 +1,6 @@
 # redis-tools
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/zehuamama/redis-tools)&nbsp;](https://goreportcard.com/report/github.com/zehuamama/redis-tools)![GitHub top language](https://img.shields.io/github/languages/top/zehuamama/redis-tools)&nbsp;![GitHub](https://img.shields.io/github/license/zehuamama/balancer)&nbsp;[![CodeFactor](https://www.codefactor.io/repository/github/zehuamama/balancer/badge)](https://www.codefactor.io/repository/github/zehuamama/redis-tools)&nbsp;![go_version](https://img.shields.io/badge/go%20version-1.19-yellow)
+[![Go Report Card](https://goreportcard.com/badge/github.com/wanzoma/redis-tools)](https://goreportcard.com/report/github.com/wanzoma/redis-tools)&nbsp;![GitHub top language](https://img.shields.io/github/languages/top/wanzoma/redis-tools)&nbsp;![GitHub](https://img.shields.io/github/license/wanzoma/balancer)&nbsp;[![CodeFactor](https://www.codefactor.io/repository/github/wanzoma/balancer/badge)](https://www.codefactor.io/repository/github/wanzoma/redis-tools)&nbsp;![go_version](https://img.shields.io/badge/go%20version-1.19-yellow)
 
 redis-tools is a collection of redis tools, including `distributed lock`, `cas`, `casEx`, `cad` .
 
@@ -10,7 +10,7 @@ Fisrt, create a demo and import the redis-tools and redis client :
 ```shell
 > go mod init demo
 
-> go get github.com/zehuamama/redis-tools
+> go get github.com/wanzoma/redis-tools
 > go get github.com/go-redis/redis/v8
 ```
 
